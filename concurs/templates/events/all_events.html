@@ -1,0 +1,282 @@
+{% include "includes/base.html" %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'styles/table.css' %}" />
+    <style>
+
+      h1 {
+        color: #ffffff;
+      }
+
+      /* Стили для таблицы */
+      #customers {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 75%;
+        margin-left: auto;
+        margin-right: 200px;
+        background-color: #1e1e1e; /* Тёмный фон для таблицы */
+        color: #ffffff; /* Белый текст */
+      }
+
+      #customers td,
+      #customers th {
+        border: 1px solid #444; /* Тёмные границы */
+        padding: 8px;
+      }
+
+      #customers tr:nth-child(even) {
+        background-color: #333; /* Тёмный фон для чётных строк */
+      }
+
+      #customers tr:hover {
+        background-color: #444; /* Фон для строки при наведении */
+        color: #04aa6d;
+      }
+
+      #customers th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04aa6d; /* Зелёный фон для заголовков */
+        color: white;
+      }
+
+      /* Стили для чата */
+      .chat-container {
+        position: fixed;
+        top: 0;
+        right: -300px;
+        width: 300px;
+        height: 100%;
+        background: #222222; /* Тёмный фон для чата */
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+        transition: right 0.3s ease;
+        z-index: 1000;
+      }
+
+      .chat-header {
+        background: #04aa6d; /* Зелёный фон */
+        color: white;
+        padding: 10px;
+        text-align: center;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .chat-body {
+        padding: 10px;
+        height: calc(100% - 120px);
+        overflow-y: auto;
+        border-bottom: 1px solid #444; /* Тёмная граница */
+      }
+
+      .message {
+        margin-bottom: 10px;
+      }
+
+      .user-message {
+        text-align: right;
+        color: #ffffff; /* Белый цвет для сообщений пользователя */
+      }
+
+      .ai-message {
+        text-align: left;
+        color: #04aa6d; /* Зелёный цвет для сообщений ИИ */
+      }
+
+      .chat-footer {
+        display: flex;
+        padding: 10px;
+        background: #333333; /* Тёмный фон */
+        border-top: 1px solid #444; /* Тёмная граница */
+      }
+
+      .input-field {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #666; /* Тёмные границы */
+        border-radius: 4px;
+        background-color: #222; /* Тёмный фон для поля ввода */
+        color: #ffffff; /* Белый текст */
+      }
+
+      
+
+      .chat-toggle {
+        position: fixed;
+        top: 50%;
+        right: -20px;
+        transform: translateY(-50%) rotate(90deg);
+        background: #04aa6d; /* Зелёная кнопка */
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px 0 0 5px;
+        cursor: pointer;
+        z-index: 1001;
+        transition: background 0.3s ease;
+      }
+
+      .chat-toggle:hover {
+        background: #03845e; /* Темнее зелёный при наведении */
+      }
+
+      button {
+        background-color: #04aa6d; /* Зелёные кнопки */
+        color: white;
+        border-radius: 10px;
+      }
+      th:nth-child(1), td:nth-child(1) {
+        width: 10%;
+      }
+    
+      th:nth-child(2), td:nth-child(2) {
+        width: 25%;
+      }
+    
+      th:nth-child(3), td:nth-child(3) {
+        width: 65%; /* остальное место */
+      }
+    </style>
+  </head>
+  <body>
+    <a href="{% url 'events:all_histories' %}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="#04aa6d" class="bi bi-arrow-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+      </svg>
+    </a>
+    <h1>История "{{ history.title }}"</h1>
+    <form method="POST">
+      {% csrf_token %}
+      <div style="display: flex;">
+        {% comment %} <input type="text" placeholder="Search..." class="form-control" style="background-color:rgb(69, 69, 69); color: white;" />
+        <button type="submit" class="search-button btn btn-primary send-button">
+          Search
+        </button> {% endcomment %}
+        {{ form_for_search.request_content }}
+        {% if form_for_search.errors.request_content %}
+            <div class="alert alert-danger mt-2">
+                {% for error in form_for_search.errors.request_content %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <button type="submit" class="search-button btn btn-primary send-button">
+          Search
+        </button>
+      </div>
+    </form>
+    <a href="{% url 'events:all_events' history_id=history.id %}" style="width=100%">
+      <button class="send-button" style="width=100%">
+          Сбросить поиск
+      </button>
+    </a>
+    <table id="customers">
+      <tr>
+        <th>
+        </th>
+        <th>Дата</th>
+        <th>Содержание</th>
+      </tr>
+      {% for event in events %}
+        <tr>
+          <td>
+            <a href="{% url 'events:about_event' history_id=history.id event_id=event.id %}">
+            <button class="search-button btn btn-primary send-button">Подробнее</button>
+            </a>
+          </td>
+          <td>{{ event.date|truncatechars:20 }}</td>
+          <td>{{ event.content|truncatechars:200 }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Чат -->
+    <div class="chat-container" id="chat-container">
+      <div class="chat-header" onclick="toggleChat()">Chat with AI</div>
+      <div class="chat-body" id="chat-body"></div>
+      <div class="chat-footer">
+        <input type="text" id="message-input" class="input-field" placeholder="Type a message..." />
+        <button id="send-button" class="send-button">Send</button>
+      </div>
+    </div>
+
+    <!-- Кнопка показа/скрытия чата -->
+    <button class="chat-toggle" onclick="toggleChat()">Chat AI</button>
+
+    <script>
+      let isGenerating = false;
+
+      // Переключение состояния чата
+      function toggleChat() {
+        const chatContainer = document.getElementById("chat-container");
+        const currentRight = parseInt(
+          window.getComputedStyle(chatContainer).right
+        );
+        if (currentRight < 0) {
+          chatContainer.style.right = "0px"; // Показать чат
+        } else {
+          chatContainer.style.right = "-300px"; // Скрыть чат
+        }
+      }
+
+      // Отправка сообщения на сервер
+      function sendMessage() {
+        const userMessage = document
+          .getElementById("message-input")
+          .value.trim();
+        if (!userMessage || isGenerating) {
+          return;
+        }
+
+        isGenerating = true; // Блокировка отправки новых сообщений
+        document.getElementById("send-button").disabled = true;
+
+        // Отображение сообщения пользователя
+        addMessage("user-message", `You: ${userMessage}`);
+
+        // Эмуляция ответа ИИ
+        setTimeout(() => {
+          addMessage(
+            "ai-message",
+            `AI: Received your message: '${userMessage}'. This is my response!`
+          );
+          isGenerating = false;
+          document.getElementById("send-button").disabled = false;
+          document.getElementById("message-input").value = ""; // Очистка поля ввода
+        }, 2000); // Задержка 2 секунды
+      }
+
+      // Добавление сообщения в чат
+      function addMessage(className, text) {
+        const chatBody = document.getElementById("chat-body");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${className}`;
+        messageDiv.textContent = text;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight; // Прокрутка вниз
+      }
+
+      // Обработка нажатия кнопки отправки
+      document
+        .getElementById("send-button")
+        .addEventListener("click", sendMessage);
+
+      // Отправка сообщения по нажатию Enter
+      document
+        .getElementById("message-input")
+        .addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            sendMessage();
+          }
+        });
+    </script>
+  </body>
+</html>
+{% endblock %}

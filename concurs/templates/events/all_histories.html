@@ -1,0 +1,14 @@
+{% include "includes/base.html" %}
+
+{% block content %}
+{% for history in histories %}
+<div class="card-container">
+    <h3>Название: "{{ history.title }}"</h3>
+    <a href="{% url 'events:all_events' history_id=history.id %}">
+    <button class="send-button" style="outline: 2px solid white; outline-offset: -2px;">
+        Подробнее
+    </button>
+    </a>
+</div>
+{% endfor %}
+{% endblock %}

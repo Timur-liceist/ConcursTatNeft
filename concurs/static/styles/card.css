@@ -1,0 +1,16 @@
+.card-container {
+    background-color: #04aa6d;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    color: white;
+    width: 80%;
+    max-width: 800px;
+    margin: 30px auto;
+}
+.card-hr {
+    border: none; /* Убираем стандартный вид линии */
+    height: 2px; /* Толщина линии */
+    background-color: white; /* Цвет линии */
+    margin: 10px 0; /* Отступы сверху и снизу */
+}

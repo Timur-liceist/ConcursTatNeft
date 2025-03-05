@@ -1,9 +1,19 @@
+import json
+
+from django.conf import settings
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 
 from events.forms import SearchForm
 from events.models import EventModel, HistoryModel
+from events.utils import (
+    get_csv_events_from_db_with_django,
+    yandex_gpt,
+)
 
 
 class AllHistoriesView(View):
@@ -40,7 +50,6 @@ class AllEventsByHistoryView(View):
     def post(self, request, history_id):
         form_for_search = SearchForm(request.POST)
         if form_for_search.is_valid():
-            print("1" * 100)
             search_content = form_for_search.cleaned_data.get(
                 "request_content",
             )
@@ -87,3 +96,66 @@ class AboutEventView(View):
             "events/about_event.html",
             context=context,
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ChatAIView(View):
+    def post(self, request, history_id):
+        try:
+            data = json.loads(request.body)
+            user_message = data.get(
+                "message",
+                "",
+            )
+            if not user_message.strip():
+                return JsonResponse(
+                    {
+                        "error": "Сообщение не может быть пустым",
+                    },
+                    status=400,
+                )
+
+            csv_events = get_csv_events_from_db_with_django(
+                history_id=history_id,
+            )
+
+            messages = []
+
+            messages.append(
+                {
+                    "role": "system",
+                    # "text": f"{settings.SYSTEM_ROLE_START_TEXT}\n{csv_events}",
+                    "text": f"{settings.SYSTEM_ROLE_START_TEXT}",
+                },
+            )
+            for event in csv_events.split("\n"):
+                messages.append(  # noqa: PERF401
+                    {
+                        "role": "system",
+                        "text": event,
+                    },
+                )
+            messages.append(
+                {
+                    "role": "user",
+                    "text": user_message,
+                },
+            )
+
+            answer_gpt = yandex_gpt(
+                messages=messages,
+            )
+
+            return JsonResponse(
+                {
+                    "response": answer_gpt,
+                },
+            )
+
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {
+                    "error": "Некорректный JSON",
+                },
+                status=400,
+            )

@@ -20,4 +20,9 @@ urlpatterns = [
         views.AboutEventView.as_view(),
         name="about_event",
     ),
+    path(
+        "history/<int:history_id>/chat_ai",
+        views.ChatAIView.as_view(),
+        name="chat_ai",
+    ),
 ]

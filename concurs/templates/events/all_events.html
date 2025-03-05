@@ -216,9 +216,7 @@
       // Переключение состояния чата
       function toggleChat() {
         const chatContainer = document.getElementById("chat-container");
-        const currentRight = parseInt(
-          window.getComputedStyle(chatContainer).right
-        );
+        const currentRight = parseInt(window.getComputedStyle(chatContainer).right);
         if (currentRight < 0) {
           chatContainer.style.right = "0px"; // Показать чат
         } else {
@@ -228,9 +226,7 @@
 
       // Отправка сообщения на сервер
       function sendMessage() {
-        const userMessage = document
-          .getElementById("message-input")
-          .value.trim();
+        const userMessage = document.getElementById("message-input").value.trim();
         if (!userMessage || isGenerating) {
           return;
         }
@@ -241,16 +237,31 @@
         // Отображение сообщения пользователя
         addMessage("user-message", `You: ${userMessage}`);
 
-        // Эмуляция ответа ИИ
-        setTimeout(() => {
-          addMessage(
-            "ai-message",
-            `AI: Received your message: '${userMessage}'. This is my response!`
-          );
-          isGenerating = false;
-          document.getElementById("send-button").disabled = false;
-          document.getElementById("message-input").value = ""; // Очистка поля ввода
-        }, 2000); // Задержка 2 секунды
+        // Отправка запроса на сервер
+        fetch("{% url 'events:chat_ai' history_id=history.id %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: userMessage }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.response) {
+              addMessage("ai-message", `AI: ${data.response}`);
+            } else {
+              addMessage("ai-message", "AI: Ошибка при получении ответа.");
+            }
+          })
+          .catch((error) => {
+            console.error("Ошибка запроса:", error);
+            addMessage("ai-message", "AI: Ошибка соединения с сервером.");
+          })
+          .finally(() => {
+            isGenerating = false;
+            document.getElementById("send-button").disabled = false;
+            document.getElementById("message-input").value = ""; // Очистка поля ввода
+          });
       }
 
       // Добавление сообщения в чат
@@ -264,18 +275,15 @@
       }
 
       // Обработка нажатия кнопки отправки
-      document
-        .getElementById("send-button")
-        .addEventListener("click", sendMessage);
+      document.getElementById("send-button").addEventListener("click", sendMessage);
 
       // Отправка сообщения по нажатию Enter
-      document
-        .getElementById("message-input")
-        .addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            sendMessage();
-          }
-        });
+      document.getElementById("message-input").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      });
+
     </script>
   </body>
 </html>

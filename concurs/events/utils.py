@@ -1,11 +1,12 @@
 import requests
+from django.conf import settings
 
 from events.models import EventModel
 
 
-def gpt(messages):
+def yandex_gpt(messages):
     prompt = {
-        "modelUri": "gpt://b1ghnehmnn3n3dvbqi90/yandexgpt",
+        "modelUri": f"gpt://{settings.ID_CATALOG_YANDEX_GPT}/yandexgpt",
         "completionOptions": {
             "stream": False,
             "temperature": 0.3,
@@ -17,7 +18,7 @@ def gpt(messages):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "Api-Key AQVNz9XUQGq4KhejXKZ-8PLoDVwLZrPGARRazGnK",
+        "Authorization": f"Api-Key {settings.IAM_TOKEN_YANDEX_GPT}",
     }
 
     response = requests.post(
@@ -42,17 +43,6 @@ def get_csv_events_from_db_with_django(history_id):
     content_csv = "Дата;Событие"
 
     for event in events:
-        content_csv += f"{event.date};{event.content}"
+        content_csv += f"\n{event.date};{event.content}"
 
     return content_csv
-
-
-def make_request_yandexgpt(messages, message):
-    messages.append(
-        {
-            "role": "user",
-            "content": message,
-        },
-    )
-
-    return gpt(messages)
